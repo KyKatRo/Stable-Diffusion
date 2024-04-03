@@ -77,13 +77,38 @@ class VAE_Decoder(nn.Sequential):
 
             nn.Upsample(scale_factor=2),
 
-            nn.Con
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+
+            VAE_ResidualBlock(512, 512),
+            VAE_ResidualBlock(512, 512),
+            VAE_ResidualBlock(512, 512),
+
+            nn.Upsample(scale_factor=2),
+
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+
+            VAE_ResidualBlock(512, 256),
+            VAE_ResidualBlock(256, 256),
+            VAE_ResidualBlock(256, 256),
+
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+
+            VAE_ResidualBlock(256, 128),
+            VAE_ResidualBlock(128, 128),
+            VAE_ResidualBlock(128, 128),
+
+            nn.groupnorm(32, 128),
+
+            nn.SiLU(),
+
+            nn.Conv2d(128, 3, kernel_size=3, padding=1),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x /= 0.18215  # cancel out the magic scaling factor because reasons
+
         for module in self:
-            if isinstance(module, nn.ConvTranspose2d):
-                x = F.pad(x, (0, 1, 0, 1))
             x = module(x)
 
         return x
