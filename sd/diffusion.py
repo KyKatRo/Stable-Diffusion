@@ -11,7 +11,6 @@ class TimeEmbedding(nn.Module):
         self.linear1 = nn.Linear(n_embed, n_embed * 4)
         self.linear2 = nn.Linear(n_embed * 4, n_embed * 4)
 
-
     def forward(self, time: torch.LongTensor) -> torch.Tensor:
         x = self.linear1(time)
 
@@ -37,7 +36,6 @@ class UNET_ResidualBlock(nn.Module):
             self.residual = nn.Identity()
         else:
             self.residual = nn.Conv2d(in_channels, out_channels, kernel_size=1, padding=0)
-
 
     def forward(self, x: torch.Tensor, time: torch.LongTensor) -> torch.Tensor:
         residue = x
@@ -70,9 +68,9 @@ class UNET_AttentionBlock(nn.Module):
         self.conv_input = nn.Conv2d(channels, channels, kernel_size=1, padding=0)
 
         self.layer_norm1 = nn.LayerNorm(channels)
-        self.attention1 = CrossAttention(n_heads, channels, in_proj_bias=False)
+        self.attention1 = SelfAttention(n_heads, channels, in_proj_bias=False)
         self.layer_norm2 = nn.LayerNorm(channels)
-        self.attention2 = CrossAttention(n_heads, channels, in_proj_bias=False)
+        self.attention2 = CrossAttention(n_heads, channels, d_context, in_proj_bias=False)
         self.layer_norm3 = nn.LayerNorm(channels)
 
         self.linear_geglu_1 = nn.Linear(channels, channels * 4)
@@ -132,22 +130,20 @@ class Upsample(nn.Module):
         return self.conv(x)
 
 
-class UNET_ResidualBlock(nn.Module):
+class UNET_OutputLayer(nn.Module):
     def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
 
         self.groupnorm = nn.GroupNorm(32, in_channels)
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
 
-    def forward(self, x: torch.Tensor, time: torch.LongTensor) -> torch.Tensor:
-        residue = x
-
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.groupnorm(x)
         x = F.silu(x)
 
         x = self.conv1(x)
 
-        return residue + x
+        return x
 
 
 class SwitchSequential(nn.Sequential):

@@ -8,7 +8,8 @@ HEIGHT = 512
 LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
 
-def generate(
+
+def generate_image(
     prompt: str,
     uncond_prompt: str, # Negative prompt
     input_image=None,
@@ -16,7 +17,7 @@ def generate(
     do_cfg=True,
     cfg_scale=7.5,
     sampler_name="ddpm",
-    n_inference_steps=50,
+    num_inference_steps=50,
     models={},
     seed=None,
     device=None,
@@ -64,7 +65,7 @@ def generate(
 
         if sampler_name == "ddpm":
             sampler = DDPMSampler(generator)
-            sampler.set_inference_steps(n_inference_steps)
+            sampler.set_inference_steps(num_inference_steps)
         else:
             raise ValueError(f"Unknown sampler: {sampler_name}")
 
