@@ -11,7 +11,7 @@ LATENTS_HEIGHT = HEIGHT // 8
 
 def generate_image(
     prompt: str,
-    uncond_prompt: str, # Negative prompt
+    uncond_prompt: str,  # Negative prompt
     input_image=None,
     strength=0.8,
     do_cfg=True,
@@ -29,7 +29,7 @@ def generate_image(
             raise ValueError("Strength must be in the range (0, 1]")
 
         if idle_device:
-            to_idle: lambda x: x.to(idle_device)
+            to_idle = lambda x: x.to(idle_device)
         else:
             to_idle = lambda x: x
 
@@ -65,7 +65,7 @@ def generate_image(
 
         if sampler_name == "ddpm":
             sampler = DDPMSampler(generator)
-            sampler.set_inference_steps(num_inference_steps)
+            sampler.set_inference_timesteps(num_inference_steps)
         else:
             raise ValueError(f"Unknown sampler: {sampler_name}")
 
@@ -87,14 +87,13 @@ def generate_image(
 
             latents = encoder(input_image_tensor, encoder_noise)
 
-            sampler.set_strenght(strength=strength)
-            latents = sampler.add_noise(latents, sampler.timesets[0])
+            sampler.set_strength(strength=strength)
+            latents = sampler.add_noise(latents, sampler.timesteps[0])
 
             to_idle(encoder)
 
         else:
             latents = torch.randn(latents_shape, generator=generator, device=device)
-
 
         diffusion = models["diffusion"]
         diffusion.to(device)
@@ -149,4 +148,3 @@ def get_time_embedding(timestep):
     x = torch.tensor([timestep], dtype=torch.float32)[:, None] * freqs[None]
 
     return torch.cat([torch.sin(x), torch.cos(x)], dim=-1)
-
